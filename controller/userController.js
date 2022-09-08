@@ -4,11 +4,18 @@ const generateToken = require("../config/generateToken");
 // const jwt = require("jsonwebtoken");
 
 const registerUser = async (req, res) => {
-  const userExists = await User.findOne({ email: req.body.email });
+  const { firstname, lastname, email, password } = req.body;
+
+  if (!firstname || !lastname || !email || !password) {
+    console.log(`Please Enter all the Feilds`);
+    return res.status(400).json({ message: "Please Enter all the Feilds" });
+  }
+
+  const userExists = await User.findOne({ email });
 
   if (userExists) {
-    console.log(`User Already Existed`);
-    return res.status(400).json({ message: "User Allready Exists" });
+    console.log(`User already exist`);
+    return res.status(400).json({ message: "User already exists!!" });
   }
 
   const user = await User.create({
@@ -27,26 +34,26 @@ const registerUser = async (req, res) => {
     });
 
     console.log(
-      `${user.firstname} Registered Successfully with email ${user.email}`
+      `${user.name} Registered Successfully with email ${user.email}!!`
     );
   } else {
-    res.statys(400);
-    throw new Error("User Not Found");
+    res.status(400);
+    throw new Error("User not found");
   }
 };
 
 const authUser = async (req, res) => {
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email: req.body.email });
+  const user = await User.findOne({ email });
 
   if (user && (await user.matchPassword(password))) {
     res.json({
-      firstname: user.firstname,
       email: user.email,
+      password: user.password,
       token: generateToken(user._id),
     });
-    console.log(`${user.firstname} Signed In Successfully`);
+    console.log(`${user.name} Signed In Successfully!!`);
   } else {
     console.log(`Invalid Email or Password`);
     return res.status(401).json({ message: "Invalid Email or Password" });
@@ -54,42 +61,3 @@ const authUser = async (req, res) => {
 };
 
 module.exports = { registerUser, authUser };
-
-// try {
-//     const hashedPassword = bcrypt.hashSync(req.body.password, 10);
-
-//     const user = await User.create({
-//       firstname: req.body.firstname,
-//       lastname: req.body.lastname,
-//       email: req.body.email,
-//       password: hashedPassword,
-//     });
-
-//     res.status(201).json(user);
-//   } catch (error) {
-//     res.status(400).json(error);
-//   }
-// };
-
-// const authUser = async (req, res) => {
-//   const user = await User.findOne({
-//     email: req.body.email,
-//   });
-
-//   if (!user) {
-//     res.status(200).json({ message: "User Dosen't Exist" });
-//   }
-
-//   const isValidPassword = bcrypt.compareSync(req.body.password, user.password);
-
-//   if (!isValidPassword) {
-//     res.status(400).json({ message: "Incorrect Password" });
-//   }
-
-//   const token = jwt.sign(
-//     { firstname: user.firstname, email: user.email },
-//     process.env.JWT_SECRET,
-//     { expireIn: "30d" }
-//   );
-
-//   res.status(200).json({ message: "Successfully Login", token });
